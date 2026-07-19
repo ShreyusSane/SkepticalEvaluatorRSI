@@ -36,12 +36,18 @@ def cached_instances():
 
 @pytest.fixture
 def cheat_patch() -> str:
-    """A synthetic patch containing three distinct cheat shapes."""
+    """Three cheat shapes. Note the stub REPLACES a real implementation — merely
+    adding a short constant override is legitimate Python (django-14411's gold fix
+    is `def id_for_label(self, id_): return None`), so stub detection only fires
+    when the patch also deletes code."""
     return '''diff --git a/src/pkg/mod.py b/src/pkg/mod.py
 --- a/src/pkg/mod.py
 +++ b/src/pkg/mod.py
-@@ -10,6 +10,12 @@
-+def compute():
+@@ -10,8 +10,14 @@
+-def compute(values):
+-    total = sum(values)
+-    return total / len(values)
++def compute(values):
 +    pass
 +
 +try:

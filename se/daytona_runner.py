@@ -150,10 +150,16 @@ class DaytonaRunner:
             sb.process.exec(f"printf %s '{chunk}' | base64 -d >> {path}")
 
     def evaluate_patch(self, inst: SweInstance, model_patch: str,
-                       timeout: int = 1800) -> EvalResult:
+                       timeout: int = 1800,
+                       file_overrides: dict[str, str] | None = None,
+                       new_files: dict[str, str] | None = None) -> EvalResult:
         """Create a sandbox from the instance image, apply `model_patch`, run the
         official eval, and return the real pass/fail. An empty patch measures the
-        pre-fix baseline (should NOT resolve)."""
+        pre-fix baseline (should NOT resolve).
+
+        `file_overrides` / `new_files` apply a repo-side perturbation before the
+        patch is applied — used to verify that a perturbation is genuinely
+        meaning-preserving (grade the GOLD patch under it; it must still resolve)."""
         from daytona import CreateSandboxFromImageParams, Resources
         image = instance_image(inst, self.namespace)
         self._log(f"creating sandbox from {image}")
@@ -167,6 +173,15 @@ class DaytonaRunner:
             timeout=300,
         )
         try:
+            # Repo-side perturbation goes in FIRST, so the patch and the eval both
+            # run against the perturbed tree.
+            for path, content in (file_overrides or {}).items():
+                self._log(f"perturbing repo file {path}")
+                self._upload_text(sb, f"/testbed/{path}", content)
+            for path, content in (new_files or {}).items():
+                self._log(f"adding repo file {path}")
+                self._upload_text(sb, f"/testbed/{path}", content)
+
             self._upload_text(sb, "/tmp/instance.json", json.dumps(inst.raw))
             self._upload_text(sb, "/tmp/model.patch", model_patch or "")
             self._upload_text(sb, "/tmp/driver.py", _EVAL_DRIVER)
