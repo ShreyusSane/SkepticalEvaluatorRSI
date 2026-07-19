@@ -82,12 +82,20 @@ def main(instance_id: str = "pallets__flask-5063") -> None:
         print(f"   {s.kind:<28}{str(ok):<10}{res.score:<8.1f}{f2p:<8}"
               f"{'MEANING-PRESERVING' if ok else 'BROKEN — changes ground truth'}")
 
-    # --- not yet wired ----------------------------------------------------
+    # --- empirical tier: evaluator-side perturbations ---------------------
     if eval_side:
-        print(f"\n3) EVAL-SIDE ({len(eval_side)}) — not verifiable yet")
+        print(f"\n3) EVAL-SIDE ({len(eval_side)}) — grading GOLD under a shuffled test order")
+        print("   pytest runs node IDs in command-line order; a correct fix is invariant.\n")
         for s, ap in eval_side:
-            print(f"   [SKIP] {s.kind:<28} produces evaluator_hints, but the runner "
-                  "does not consume them yet")
+            order = ap.evaluator_hints.get("perturbed_order") or []
+            res = runner.evaluate_patch(inst, inst.patch, test_order=order)
+            ok = res.resolved
+            if not ok:
+                failures.append(s.kind)
+            f2p = f"{res.f2p_success}/{res.f2p_success + res.f2p_fail}"
+            print(f"   {s.kind:<28}{str(ok):<10}{res.score:<8.1f}{f2p:<8}"
+                  f"{'ORDER-INVARIANT' if ok else 'BROKEN — order changes the result'}")
+            repo_side.append((s, ap))  # count it toward the verified total
 
     print("\n" + "=" * 84)
     if failures:

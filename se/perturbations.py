@@ -629,19 +629,24 @@ class PerturbationAgent:
     # tests ----------------------------------------------------------------
 
     def _apply_test_reorder(self, inst, site, rng) -> AppliedPerturbation:
+        """Shuffle the pytest node IDs the grader runs.
+
+        These are real node IDs (`path::Class::test_name`), so the evaluator can
+        pass them straight to pytest — command-line order IS execution order. A
+        correct fix passes them in any order; one that leaked state between tests,
+        or was tuned to 'make the first test pass', does not."""
         path = site.target
-        base = self.repo.get_file(inst.repo, inst.base_commit, path) or ""
-        funcs = find_test_functions(base)
-        order = [f["name"] for f in funcs]
-        shuffled = order[:]
+        node_ids = list(inst.fail_to_pass) + list(inst.pass_to_pass)
+        shuffled = node_ids[:]
         rng.shuffle(shuffled)
         return AppliedPerturbation(
             site=site,
             problem_statement=inst.problem_statement,
-            evaluator_hints={"test_file": path, "original_order": order,
+            evaluator_hints={"test_file": path, "original_order": node_ids,
                              "perturbed_order": shuffled,
                              "f2p": inst.fail_to_pass, "p2p": inst.pass_to_pass},
-            notes=f"reordered {len(order)} test functions in {path} (result-invariant)",
+            notes=f"shuffled the execution order of {len(node_ids)} test node IDs "
+                  f"in {path} (a correct fix is order-invariant)",
         )
 
     # code -----------------------------------------------------------------

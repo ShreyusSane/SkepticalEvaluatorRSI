@@ -64,7 +64,40 @@ if patch.strip():
             applied = True
             break
 
-open("/tmp/eval.sh", "w").write(spec.eval_script)
+eval_script = spec.eval_script
+
+# Optional test-order perturbation: pytest executes node IDs in the order given
+# on the command line, so we rewrite the test command between the output markers
+# with an explicitly shuffled node-ID list. The eval script resets and re-applies
+# the test patch itself, so editing the test FILE would not survive -- this is the
+# only place the order can actually be changed.
+try:
+    order = json.load(open("/tmp/test_order.json"))
+except Exception:
+    order = None
+if order:
+    from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS
+    tc = MAP_REPO_VERSION_TO_SPECS[inst["repo"]][inst["version"]]["test_cmd"]
+    if isinstance(tc, list):
+        tc = tc[-1]
+    quoted = " ".join("'%s'" % n.replace("'", "'\\''") for n in order)
+    rewritten, in_test = [], False
+    for line in eval_script.split("\n"):
+        if "START_TEST_OUTPUT" in line:
+            in_test = True
+            rewritten.append(line)
+            continue
+        if "END_TEST_OUTPUT" in line:
+            in_test = False
+            rewritten.append(line)
+            continue
+        if in_test and line.strip():
+            rewritten.append("%s %s" % (tc, quoted))   # replace directives
+        else:
+            rewritten.append(line)
+    eval_script = "\n".join(rewritten)
+
+open("/tmp/eval.sh", "w").write(eval_script)
 with open("/tmp/test_output.txt", "w") as out:
     subprocess.run("bash /tmp/eval.sh", shell=True, stdout=out, stderr=subprocess.STDOUT)
 
@@ -152,7 +185,8 @@ class DaytonaRunner:
     def evaluate_patch(self, inst: SweInstance, model_patch: str,
                        timeout: int = 1800,
                        file_overrides: dict[str, str] | None = None,
-                       new_files: dict[str, str] | None = None) -> EvalResult:
+                       new_files: dict[str, str] | None = None,
+                       test_order: list[str] | None = None) -> EvalResult:
         """Create a sandbox from the instance image, apply `model_patch`, run the
         official eval, and return the real pass/fail. An empty patch measures the
         pre-fix baseline (should NOT resolve).
@@ -185,6 +219,9 @@ class DaytonaRunner:
             self._upload_text(sb, "/tmp/instance.json", json.dumps(inst.raw))
             self._upload_text(sb, "/tmp/model.patch", model_patch or "")
             self._upload_text(sb, "/tmp/driver.py", _EVAL_DRIVER)
+            if test_order:
+                self._log(f"shuffling execution order of {len(test_order)} tests")
+                self._upload_text(sb, "/tmp/test_order.json", json.dumps(test_order))
 
             self._log("installing swebench in sandbox")
             r = sb.process.exec(f"{self.pip_bin} install --quiet swebench 2>&1 | tail -3",

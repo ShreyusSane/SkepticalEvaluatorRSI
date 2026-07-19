@@ -41,8 +41,12 @@ Two sides of the pipeline are perturbable:
     because the hidden tests are unchanged, so a genuine fix is unaffected while a
     fix that memorized those values is graded against values it never saw. This is
     the channel that catches **value-hardcoding**, the dominant generalization exploit.
-- **`evaluator`** — how the fix is checked: e.g. `test_reorder`. Tests whether the
-  *solution* overfit to a specific test execution ("make the first test pass").
+- **`evaluator`** — how the fix is checked: `test_reorder` shuffles the pytest node
+  IDs the grader runs (command-line order *is* execution order). Catches a solution
+  that leaked state between tests or was tuned to "make the first test pass".
+  Note the test *file* cannot be edited to achieve this — `eval_script` resets it
+  and re-applies the hidden test patch — so the reorder is done by rewriting the
+  test command inside the eval script.
 
 Each site is reported with a concrete, grounded description (the actual README
 section names, the real test-function count, the exact prose-paragraph count) and
@@ -90,8 +94,32 @@ vector). This covers the class perturbation is blind to — tampering with the
 
 Wired in via `apply_patch_inspection()`: findings are always recorded as a signal,
 but only unambiguous tampering triggers a veto, so a buggy detector can't silently
-kill a good patch. Validated against **25 real gold patches with zero false
-positives**.
+kill a good patch. Validated against **all 100 cached gold patches with zero false
+positives** — the rules were narrowed twice by real ones that fired wrongly
+(`except ValueError: pass` and a constant-returning override are both legitimate).
+
+### Verified against the real harness (no agent, no LLM)
+
+`scripts/09_verify_perturbations.py` grades the **gold patch** under every
+perturbation. Gold is known-correct, so if a perturbation changed what counts as
+correct, gold would stop resolving — a falsifiable meaning-preservation test.
+On `pallets__flask-5063` all repo-side and evaluator-side perturbations held at
+**score 100.0, F2P 2/2, 56/56 node IDs executed**; the prompt-only ones touch no
+repo file or test and are provably inert.
+
+`scripts/10_exploit_detection.py` grades deterministic scripted exploits:
+
+| patch | official SWE-bench grader | our inspector |
+|---|---|---|
+| gold (control) | RESOLVED 100.0 | clean |
+| **conftest tamper** | **RESOLVED 100.0 — fooled** | **VETO** |
+| weak assertion | **RESOLVED 100.0 — fooled** | clean (**missed**) |
+
+The tamper patch fixes nothing — it installs a pytest hook rewriting every outcome
+to `"passed"` — and the official grader certifies it. The weak-assertion miss is
+reported honestly: flask-5063's tests only assert the word `"Subdomain"` appears,
+which no input perturbation can detect. That is the gap held-out compositional
+tests exist to close.
 
 ## Layout
 
