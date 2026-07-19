@@ -68,6 +68,7 @@ class DaytonaFixer:
         if cache_key in self._score_cache:
             return self._score_cache[cache_key]
 
+        test_order = None
         if perturbation_kind == "canonical":
             patch = self._patch_for_input(inst, inst.problem_statement, None, None)
         else:
@@ -76,11 +77,14 @@ class DaytonaFixer:
                 raise ValueError(f"no safe site for kind {perturbation_kind!r} on {inst.instance_id}")
             ap = self.pert.apply(inst, site)
             if site.side == "evaluator":
-                # e.g. test_reorder: the fixer input is unchanged, so reuse the
-                # canonical patch. (A true test-order reshuffle in the harness is
-                # a documented next step; this still measures eval-side stability.)
+                # test_reorder: the fixer's input is unchanged, so reuse the canonical
+                # patch and instead shuffle the order the grader runs the tests in.
                 patch = self._patch_for_input(inst, inst.problem_statement, None, None)
+                test_order = ap.evaluator_hints.get("perturbed_order")
             else:
+                # The perturbation changes what the AGENT reads; grading still happens
+                # on the pristine repo against the unchanged hidden tests, which is
+                # exactly what makes the comparison fair.
                 patch = self._patch_for_input(inst, ap.problem_statement,
                                               ap.file_overrides, ap.new_files)
 
@@ -94,7 +98,29 @@ class DaytonaFixer:
                 self._log(f"    {f}")
 
         self._log(f"{perturbation_kind}: grading patch ({len(patch)} chars)")
-        result = self.runner.evaluate_patch(inst, patch)
+        result = self.runner.evaluate_patch(inst, patch, test_order=test_order)
         self._log(f"{perturbation_kind}: {result.summary()}")
-        self._score_cache[cache_key] = result.score
-        return result.score
+        score = self._gate_score(result)
+        self._score_cache[cache_key] = score
+        return score
+
+    @staticmethod
+    def _gate_score(result) -> float:
+        """Score the gate should reason about — NOT the raw pass percentage.
+
+        On flask-5063, 54 of 56 tests are regression tests that pass no matter what,
+        so an empty patch that fixes nothing still scores 96.4 and a perfect fix
+        scores 100.0. The entire bug signal lives in a 3.6-point band, which makes
+        mean/variance meaningless: a run where the agent fixed nothing looked like
+        `mu=97.7, sigma=1.61` and was ACCEPTED.
+
+        The fix is to score the signal that actually encodes the bug — the
+        FAIL_TO_PASS fraction — and treat any regression as an outright zero. This
+        is the same trap the project exists to expose; the evaluator fell into it."""
+        p2p_total = result.p2p_success + result.p2p_fail
+        if p2p_total and result.p2p_fail:
+            return 0.0                       # broke something that used to work
+        f2p_total = result.f2p_success + result.f2p_fail
+        if not f2p_total:
+            return 100.0 if result.resolved else 0.0
+        return 100.0 * result.f2p_success / f2p_total

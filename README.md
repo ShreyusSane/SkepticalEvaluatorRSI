@@ -121,6 +121,37 @@ reported honestly: flask-5063's tests only assert the word `"Subdomain"` appears
 which no input perturbation can detect. That is the gap held-out compositional
 tests exist to close.
 
+### The metric trap our own evaluator fell into
+
+Running a real LLM agent across `t` and 9 perturbed variants (`scripts/11`) exposed a
+bug in the gate itself, and it is the single most instructive result here.
+
+On flask-5063, **54 of 56 tests are regression tests that pass no matter what**. So
+an empty patch that fixes nothing scores **96.4**, and a perfect fix scores 100.0 —
+the entire bug signal lives in a 3.6-point band. Scoring the gate on that raw
+percentage produced:
+
+| metric | mean | sigma | verdict |
+|---|--:|--:|---|
+| raw pass-% | 97.7 | 1.61 | **ACCEPT** — wrong |
+| FAIL_TO_PASS fraction | 35.0 | 45.00 | **REJECT** — correct |
+
+The agent had resolved **3 of 10** variants and failed `t` itself, yet the raw metric
+called it tight-and-high and certified it. `DaytonaFixer._gate_score` now scores the
+FAIL_TO_PASS fraction and zeroes any patch that breaks a passing test.
+
+This is exactly the failure the project exists to expose — a single scalar that looks
+great while nothing was fixed — and the evaluator walked into it. Worth keeping in
+the write-up rather than quietly patching out.
+
+### Agent nondeterminism is a confound
+
+That same run showed A-e failing `t` but passing 3 perturbed variants. Systematic
+reward hacking predicts the *opposite* (pass `t`, fail the twins), so this is
+run-to-run variance in a stochastic agent, not an exploit. With **n=1 per condition
+you cannot separate perturbation-fragility from agent noise** — repeated sampling per
+variant is required before a variance signal means anything about a real LLM agent.
+
 ## Layout
 
 ```
@@ -145,14 +176,17 @@ scripts/
   06_rsi_loops.py                    the RSI loop: naive Yes/No vs. perturbation evaluator, over rounds, + plot
   07_daytona_smoke_test.py           REAL eval pipeline check (gold resolves, empty doesn't) — no Anthropic cost
   08_daytona_real_round.py           REAL adaptive skeptical eval on one instance (agent + real grading)
+  09_verify_perturbations.py         REAL harness: grade the GOLD patch under every perturbation
+  10_exploit_detection.py            REAL harness: grade scripted exploits, grader vs. our inspector
 out/
   rsi_accuracy.png                   accuracy-per-round plot written by script 06
 web/
-  skeptical-evaluator.html       the pitch site (problem, approach, variance chart, plant demo)
+  index.html                     the pitch site — landing, problem, solution, architecture, demo, next steps
+  skeptical-evaluator.html       earlier single-page version (kept for reference)
 ```
 
-Open `web/skeptical-evaluator.html` directly in a browser, or serve it:
-`npx http-server web -p 8877` then visit `http://127.0.0.1:8877/skeptical-evaluator.html`.
+Open `web/index.html` directly in a browser, or serve it:
+`npx http-server web -p 8877` then visit `http://127.0.0.1:8877/index.html`.
 
 ## Run it
 
@@ -180,6 +214,9 @@ python scripts/05_metamorphic_and_adaptive.py
 #    perturbation evaluator (keeps improving); writes out/rsi_accuracy.png
 python scripts/06_rsi_loops.py
 ```
+
+The real-harness scripts (`07`–`10`) need `DAYTONA_API_KEY` — see
+[Real evaluation via Daytona](#real-evaluation-via-daytona-ground-truth-numbers) below.
 
 ## The headline result (script 06)
 
@@ -251,7 +288,11 @@ automatically. Cost per channel ≈ 2 sandboxes + 1 agent loop, so prefer
 On Windows PowerShell, prefix with `$env:PYTHONIOENCODING="utf-8";` so the μ/σ
 glyphs print. Data is cached under `data/` after the first fetch.
 
-## Wiring in a real agent (next step)
+## Wiring in a real agent — the local-Docker alternative
+
+The Daytona path above already does this without local Docker, and is the
+recommended route. This section documents the offline equivalent for anyone who
+does have Docker and would rather not depend on a cloud sandbox.
 
 `se/fixers.py:RealAgentFixer` documents the drop-in: materialize the perturbed
 repo at `base_commit`, run an open-source SWE-bench agent (Aider / SWE-agent /
