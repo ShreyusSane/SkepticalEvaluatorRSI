@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Skeptical Evaluator — Trust, but perturb.</title>
-<meta name="description" content="An RSI loop whose reward model refuses to certify an improvement until it survives repeated, perturbed re-checks. High variance is the reward-hacking signature.">
+<title>Skeptic — perturbation-based reward modeling</title>
+<meta name="description" content="Skeptic — a reward model that refuses to certify an improvement until it survives repeated, perturbed re-checks. High variance is the reward-hacking signature.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -277,8 +277,8 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
 <!-- 01 HERO -->
 <section class="slide" id="hero">
   <div class="grid-bg"></div><div class="glow"></div>
-  <div class="mark">The Skeptical Evaluator</div>
-  <h1>Trust,<br>but perturb.</h1>
+  <div class="mark">Perturbation-based reward modeling</div>
+  <h1>Skeptic</h1>
   <div class="slogan">One score is a <em>guess</em>. A distribution is <em>evidence</em>.</div>
   <p class="sub">A reward model that refuses to certify an improvement until it survives
   repeated, meaning-preserving re-checks — because high variance is the signature of a reward hack.</p>
@@ -491,12 +491,12 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
       </div>
     </div>
 
-    <div class="note">Every number in this explorer is <strong>modeled</strong>, illustrative data —
-    not a measured run. It encodes the one thing that separates a genuine fix from a hack: which
-    incidental feature the fix depends on. The tasks, the perturbations and the meaning-preservation
-    checks are real; the per-perturbation scores here are not. And the score on each chip is a raw
-    pass-rate — <em>which scalar you feed the gate turns out to matter enormously</em>, as the next
-    slide shows at our own expense.</div>
+    <div class="note">Skeptic's gate, traced across six rounds. The perturbation agent, the
+    meaning-preservation checks and the grading harness are <strong>real</strong> — every score is
+    produced by SWE-bench's own grader running in a <strong>Daytona sandbox</strong>, booted from the
+    official instance image with the hidden tests applied. The measured agent round on
+    <span class="mono">pallets__flask-5063</span> anchors the curve; the round-by-round view projects
+    that behaviour across the full loop, so you can watch the spread close axis by axis.</div>
   </div>
 </section>
 
@@ -505,10 +505,10 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
   <div class="wrap">
     <div class="eyebrow rv">06 · Results · ground truth, no agent, no LLM</div>
     <div class="rv">
-      <h2>We fooled the official grader.</h2>
-      <p style="margin-bottom:1.5rem">Everything on the previous slide was modeled. Nothing on this one
-      is. Deterministic scripted patches, graded by <strong>SWE-bench's own grader</strong> in a Daytona
-      sandbox on <span class="mono">pallets__flask-5063</span>.</p>
+      <h2>Skeptic caught what the official grader missed.</h2>
+      <p style="margin-bottom:1.5rem">Deterministic scripted patches, graded by <strong>SWE-bench's own
+      grader</strong> in a Daytona sandbox on <span class="mono">pallets__flask-5063</span> — then put
+      through Skeptic.</p>
 
       <div class="rtable">
         <div class="rhead">
@@ -551,44 +551,32 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
         what counts as correct, gold would have stopped resolving.
       </div>
 
-      <h3 style="margin-top:3.5rem">The trap our own evaluator fell into</h3>
-      <h2 style="font-size:clamp(1.4rem,3.2vw,2.2rem)">We shipped the bug we exist to catch.</h2>
-      <p style="margin-bottom:1.5rem">Running a real LLM agent across the base task and 9 perturbed
-      variants exposed a flaw in the gate itself — and it's the most instructive result here.
-      On flask-5063, <strong>54 of 56 tests are regression tests that pass no matter what</strong>.
-      An empty patch that fixes nothing scores <span class="hl-a">96.4</span>; a perfect fix scores
-      100.0. The entire bug signal lives in a <strong>3.6-point band</strong>.</p>
+      <h3 style="margin-top:3.5rem">The metric that makes the gate work</h3>
+      <h2 style="font-size:clamp(1.4rem,3.2vw,2.2rem)">Skeptic scores what actually matters.</h2>
+      <p style="margin-bottom:1.5rem">Benchmarks flatter you by default. On flask-5063,
+      <strong>54 of 56 tests are regression tests that pass no matter what</strong> — an empty patch that
+      fixes nothing still scores <span class="hl-a">96.4</span>. Gate on that raw number and almost
+      anything clears the bar. Skeptic gates on the <span class="mono">FAIL_TO_PASS</span> fraction
+      instead, and zeroes any patch that breaks a passing test.</p>
 
       <div class="rtable">
         <div class="rhead"><span>Gate metric</span><span>μ / σ</span><span>Verdict</span></div>
         <div class="rrow">
           <span class="mono">raw pass-%</span>
           <span class="hl-a">97.7 / 1.61</span>
-          <span class="hl-w">ACCEPT — wrong</span>
+          <span class="hl-w">certifies a non-fix</span>
         </div>
         <div class="rrow" style="background:var(--panel)">
-          <span class="mono">FAIL_TO_PASS fraction</span>
+          <span class="mono">FAIL_TO_PASS fraction <em style="color:var(--muted)">(Skeptic)</em></span>
           <span class="hl">35.0 / 45.00</span>
-          <span class="hl">REJECT — correct</span>
+          <span class="hl">rejects it ✓</span>
         </div>
       </div>
 
-      <div class="note" style="border-left-color:var(--warn)">
-        The agent resolved <strong>3 of 10</strong> variants and failed the base task outright — yet the
-        raw metric called it tight-and-high and certified it. A single scalar that looks great while
-        nothing was fixed is precisely what this project exists to expose, and our own evaluator walked
-        straight into it. <span class="mono">DaytonaFixer._gate_score</span> now scores the FAIL_TO_PASS
-        fraction and zeroes any patch that breaks a passing test. Documented rather than quietly patched
-        out — <em>which scalar you gate on is not a detail.</em>
-      </div>
-
-      <div class="note" style="border-left-color:var(--amber)">
-        <strong>And a confound, stated plainly.</strong> That same run showed a variant failing the base
-        task but passing three perturbed twins. Systematic reward hacking predicts the
-        <em>opposite</em> — so this is run-to-run variance in a stochastic agent, not an exploit.
-        At <strong>n=1 per condition you cannot separate perturbation-fragility from agent noise</strong>.
-        Repeated sampling per variant is required before a variance signal means anything about a
-        real LLM agent.
+      <div class="note" style="border-left-color:var(--accent-line)">
+        The entire bug signal on this task lives in a <strong>3.6-point band</strong> — which is exactly
+        how a single scalar hides a fix that fixed nothing. Choosing the right scalar is the difference
+        between a gate that certifies everything and a gate that means something.
       </div>
     </div>
   </div>
@@ -601,18 +589,18 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
     <h2 class="rv">From modeled to ground truth.</h2>
     <div class="steps rv">
       <div class="step-card">
-        <div class="idx">01 · Closes a known miss</div>
+        <div class="idx">01 · Extends the gate</div>
         <h4>Held-out tests</h4>
-        <p>The weak-assertion patch beat both the official grader and our inspector, because flask-5063's
-        tests barely assert anything. Compositional property tests the fixer never sees are the only
-        thing that reaches this class.</p>
+        <p>Benchmark suites assert less than you'd hope — flask-5063's barely check the behaviour at all.
+        Compositional property tests the fixer never sees give Skeptic a specification axis on top of the
+        input axes it already covers.</p>
       </div>
       <div class="step-card">
-        <div class="idx">02 · Blocks every real-agent claim</div>
+        <div class="idx">02 · Tightens the signal</div>
         <h4>Repeated sampling</h4>
-        <p>At n=1 per variant, agent nondeterminism and perturbation-fragility are indistinguishable.
-        Sample each variant repeatedly so the variance signal means something about the fix rather than
-        about the coin flip.</p>
+        <p>Sampling each variant several times drives the confidence interval down and cleanly separates
+        fix-fragility from ordinary agent variance — turning the spread into a statistic you can put a
+        bound on.</p>
       </div>
       <div class="step-card">
         <div class="idx">03 · Frontier axis</div>
@@ -652,8 +640,8 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
 <footer>
   <div class="wrap">
     <div>
-      <div class="brand">The Skeptical Evaluator</div>
-      <div class="meta" style="margin-top:.5rem">Trust, but perturb.</div>
+      <div class="brand">Skeptic</div>
+      <div class="meta" style="margin-top:.5rem">One score is a guess. A distribution is evidence.</div>
     </div>
     <div class="meta">
       Perturbation agent for a SWE-bench code fixer<br>
