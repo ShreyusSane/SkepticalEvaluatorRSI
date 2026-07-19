@@ -598,7 +598,12 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
         <strong>Zero false positives, zero variance.</strong> The adaptive gate reached ACCEPT in 6 of a
         possible 10 samples — a genuine fix costs about one probe per axis. Together with the tamper veto
         above, that closes the truth table in both directions on real, graded runs: <em>a real fix is
-        certified, a fake one is not.</em>
+        certified, a fake one is not.</em><br><br>
+        <strong>This is what makes Skeptic safe to actually deploy.</strong> A gate is only adoptable if
+        it lets real work through — and a genuinely meaningful fix, one that solved the underlying
+        problem rather than memorising the test, was <strong>not penalised for being re-checked five
+        different ways</strong>. It scored identically every time. Teams can raise the bar against
+        reward hacking without paying for it in rejected good work.
       </div>
 
       <h3 style="margin-top:3.5rem">The metric that makes the gate work</h3>
