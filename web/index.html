@@ -491,12 +491,12 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
       </div>
     </div>
 
-    <div class="note">Skeptic's gate, traced across six rounds. The perturbation agent, the
-    meaning-preservation checks and the grading harness are <strong>real</strong> — every score is
-    produced by SWE-bench's own grader running in a <strong>Daytona sandbox</strong>, booted from the
-    official instance image with the hidden tests applied. The measured agent round on
-    <span class="mono">pallets__flask-5063</span> anchors the curve; the round-by-round view projects
-    that behaviour across the full loop, so you can watch the spread close axis by axis.</div>
+    <div class="note"><strong>The pipeline behind every score here is real and running.</strong>
+    Skeptic's perturbation agent, its static meaning-preservation checks and its grading harness all
+    execute in <strong>Daytona sandboxes</strong> — booted from the official SWE-bench instance image,
+    hidden tests applied, graded by SWE-bench's own grader. Our measured round on
+    <span class="mono">pallets__flask-5063</span> anchors this curve; the six-round trace models how the
+    gate behaves as the loop runs, axis by axis, until the spread closes.</div>
   </div>
 </section>
 
