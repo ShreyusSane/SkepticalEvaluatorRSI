@@ -14,3 +14,5 @@ data/filecache/
 # Generated artifacts — but keep the headline RSI plot, it's a deliverable
 out/*
 !out/rsi_accuracy.png
+# Real-run logs are the evidence behind the measured results — keep them
+!out/runs/

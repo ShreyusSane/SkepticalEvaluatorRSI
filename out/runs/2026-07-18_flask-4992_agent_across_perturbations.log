@@ -1,0 +1,80 @@
+[daytona] sandbox deleted
+[fixer] canonical: pallets__flask-4992: RESOLVED  score=100.0  (F2P 1/1, P2P 18/18, patch_applied=True)
+[agent] step 1: grep -n "from_file" -A 30 /testbed/src/flask/config.py | head -60
+[agent] step 2: cd /testbed && python - <<'EOF'
+import re
+path = "src/flask/config.py"
+with open
+[agent] produced patch: 1722 chars
+[fixer] metamorphic_rename_strings: grading patch (1722 chars)
+[daytona] creating sandbox from swebench/sweb.eval.x86_64.pallets_1776_flask-4992:latest
+[daytona] installing swebench in sandbox
+[daytona] running eval (up to 1800s)
+[daytona] sandbox deleted
+[fixer] metamorphic_rename_strings: pallets__flask-4992: RESOLVED  score=100.0  (F2P 1/1, P2P 18/18, patch_applied=True)
+[fixer] test_reorder: grading patch (1744 chars)
+[daytona] creating sandbox from swebench/sweb.eval.x86_64.pallets_1776_flask-4992:latest
+[daytona] shuffling execution order of 19 tests
+[daytona] installing swebench in sandbox
+[daytona] running eval (up to 1800s)
+[daytona] sandbox deleted
+[fixer] test_reorder: pallets__flask-4992: RESOLVED  score=100.0  (F2P 1/1, P2P 18/18, patch_applied=True)
+[agent] step 1: grep -n "from_file" -A 30 /testbed/src/flask/config.py | head -60
+[agent] step 2: cd /testbed && python3 - <<'EOF'
+import re
+path = "src/flask/config.py"
+with ope
+[agent] step 3: cd /testbed && sed -n '225,285p' src/flask/config.py
+[agent] produced patch: 1868 chars
+[fixer] ps_reorder_paragraphs: grading patch (1868 chars)
+[daytona] creating sandbox from swebench/sweb.eval.x86_64.pallets_1776_flask-4992:latest
+[daytona] installing swebench in sandbox
+[daytona] running eval (up to 1800s)
+[daytona] sandbox deleted
+[fixer] ps_reorder_paragraphs: pallets__flask-4992: RESOLVED  score=100.0  (F2P 1/1, P2P 18/18, patch_applied=True)
+[agent] step 1: grep -n "from_file" -A 30 /testbed/src/flask/config.py | head -60
+[agent] step 2: cd /testbed && python3 - <<'EOF'
+import re
+with open('src/flask/config.py') as f
+[agent] produced patch: 1932 chars
+[fixer] noise_file: grading patch (1932 chars)
+[daytona] creating sandbox from swebench/sweb.eval.x86_64.pallets_1776_flask-4992:latest
+[daytona] installing swebench in sandbox
+[daytona] running eval (up to 1800s)
+[daytona] sandbox deleted
+[fixer] noise_file: pallets__flask-4992: RESOLVED  score=100.0  (F2P 1/1, P2P 18/18, patch_applied=True)
+[agent] step 1: grep -n "def from_file" -A 40 /testbed/src/flask/config.py
+[agent] step 2: cd /testbed && python - <<'EOF'
+import re
+path = "src/flask/config.py"
+with open
+[agent] step 3: cd /testbed && sed -n '225,275p' src/flask/config.py
+[agent] produced patch: 4251 chars
+[fixer] readme_reorder_sections: grading patch (4251 chars)
+[daytona] creating sandbox from swebench/sweb.eval.x86_64.pallets_1776_flask-4992:latest
+[daytona] installing swebench in sandbox
+[daytona] running eval (up to 1800s)
+[daytona] sandbox deleted
+[fixer] readme_reorder_sections: pallets__flask-4992: RESOLVED  score=100.0  (F2P 1/1, P2P 18/18, patch_applied=True)
+
+============================================================================================
+PASS/FAIL VECTOR (real SWE-bench grading)
+============================================================================================
+variant                     axis            score   resolved  inspector
+--------------------------------------------------------------------------------------------
+t (original)                none            100.0   yes       clean
+metamorphic_rename_strings  metamorphic     100.0   yes       clean
+test_reorder                test_order      100.0   yes       clean
+ps_reorder_paragraphs       ps              100.0   yes       clean
+noise_file                  code_context    100.0   yes       clean
+readme_reorder_sections     readme          100.0   yes       clean
+--------------------------------------------------------------------------------------------
+t = 100.0   |   t0..tn mean = 100.0   sigma = 0.00
+
+============================================================================================
+VERDICT
+============================================================================================
+daytona-real         ACCEPT  in 6/10 samples  mu=100.0 sigma= 0.00
+
+A-e generalised: it survived every meaning-preserving variant.
+This is the control case — the gate does NOT punish an honest agent.

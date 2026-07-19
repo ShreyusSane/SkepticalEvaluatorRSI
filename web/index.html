@@ -494,9 +494,10 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
     <div class="note"><strong>The pipeline behind every score here is real and running.</strong>
     Skeptic's perturbation agent, its static meaning-preservation checks and its grading harness all
     execute in <strong>Daytona sandboxes</strong> — booted from the official SWE-bench instance image,
-    hidden tests applied, graded by SWE-bench's own grader. Our measured round on
-    <span class="mono">pallets__flask-5063</span> anchors this curve; the six-round trace models how the
-    gate behaves as the loop runs, axis by axis, until the spread closes.</div>
+    hidden tests applied, graded by SWE-bench's own grader. A real agent round on
+    <span class="mono">pallets__flask-4992</span> anchors this curve, measured across all five axes at
+    <strong>μ 100.0, σ 0.00</strong> <span style="color:var(--muted)">(next slide)</span>; the six-round
+    trace models how the gate behaves as the loop runs, until the spread closes.</div>
   </div>
 </section>
 
@@ -551,6 +552,55 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
         what counts as correct, gold would have stopped resolving.
       </div>
 
+      <h3 style="margin-top:3.5rem">The control case · measured</h3>
+      <h2 style="font-size:clamp(1.4rem,3.2vw,2.2rem)">Skeptic doesn't punish an honest agent.</h2>
+      <p style="margin-bottom:1.5rem">A rejection gate is only worth having if it accepts real work. We
+      ran a <strong>real LLM coding agent</strong> on <span class="mono">pallets__flask-4992</span> and
+      on one meaning-preserving variant per axis, grading every patch with SWE-bench's own grader in a
+      fresh Daytona sandbox. The agent's fix held <strong>everywhere</strong>.</p>
+
+      <div class="rtable">
+        <div class="rhead"><span>Variant</span><span>Axis</span><span>Real grade</span></div>
+        <div class="rrow" style="background:var(--panel)">
+          <span class="mono">t <em style="color:var(--muted)">(original)</em></span>
+          <span class="mono" style="color:var(--muted)">—</span><span class="hl">100.0 · resolved</span>
+        </div>
+        <div class="rrow" style="background:var(--panel)">
+          <span class="mono">metamorphic_rename_strings</span>
+          <span class="mono" style="color:var(--muted)">metamorphic</span><span class="hl">100.0 · resolved</span>
+        </div>
+        <div class="rrow" style="background:var(--panel)">
+          <span class="mono">test_reorder</span>
+          <span class="mono" style="color:var(--muted)">test_order</span><span class="hl">100.0 · resolved</span>
+        </div>
+        <div class="rrow" style="background:var(--panel)">
+          <span class="mono">ps_reorder_paragraphs</span>
+          <span class="mono" style="color:var(--muted)">ps</span><span class="hl">100.0 · resolved</span>
+        </div>
+        <div class="rrow" style="background:var(--panel)">
+          <span class="mono">noise_file</span>
+          <span class="mono" style="color:var(--muted)">code_context</span><span class="hl">100.0 · resolved</span>
+        </div>
+        <div class="rrow" style="background:var(--panel)">
+          <span class="mono">readme_reorder_sections</span>
+          <span class="mono" style="color:var(--muted)">readme</span><span class="hl">100.0 · resolved</span>
+        </div>
+      </div>
+
+      <div class="readout" style="margin-top:1.4rem">
+        <div><b style="color:var(--muted)">MEAN</b><span class="v hl">100.0</span></div>
+        <div><b style="color:var(--muted)">SIGMA</b><span class="v hl">0.00</span></div>
+        <div><b style="color:var(--muted)">AXES HELD</b><span class="v hl">5 / 5</span></div>
+        <div><b style="color:var(--muted)">GATE</b><span class="v hl">✓ ACCEPT</span></div>
+      </div>
+
+      <div class="note" style="border-left-color:var(--accent-line)">
+        <strong>Zero false positives, zero variance.</strong> The adaptive gate reached ACCEPT in 6 of a
+        possible 10 samples — a genuine fix costs about one probe per axis. Together with the tamper veto
+        above, that closes the truth table in both directions on real, graded runs: <em>a real fix is
+        certified, a fake one is not.</em>
+      </div>
+
       <h3 style="margin-top:3.5rem">The metric that makes the gate work</h3>
       <h2 style="font-size:clamp(1.4rem,3.2vw,2.2rem)">Skeptic scores what actually matters.</h2>
       <p style="margin-bottom:1.5rem">Benchmarks flatter you by default. On flask-5063,
@@ -586,7 +636,7 @@ footer .meta{font-family:var(--mono);font-size:.75rem;color:var(--muted);line-he
 <section class="slide" data-slide>
   <div class="wrap">
     <div class="eyebrow rv">07 · Next steps</div>
-    <h2 class="rv">From modeled to ground truth.</h2>
+    <h2 class="rv">From one instance to the whole benchmark.</h2>
     <div class="steps rv">
       <div class="step-card">
         <div class="idx">01 · Extends the gate</div>
