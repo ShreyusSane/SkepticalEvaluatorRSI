@@ -1,0 +1,16 @@
+# Secrets — never commit
+.env
+server/.env
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Regenerable data caches (SWE-bench dataset + fetched repo files)
+data/cache/
+data/filecache/
+
+# Generated artifacts — but keep the headline RSI plot, it's a deliverable
+out/*
+!out/rsi_accuracy.png

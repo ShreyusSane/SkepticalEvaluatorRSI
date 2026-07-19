@@ -1,0 +1,838 @@
+<title>The Skeptical Evaluator</title>
+<style>
+  :root {
+    --surface: #EAEDE9;
+    --surface-raised: #F6F7F3;
+    --surface-sunken: #E1E5DD;
+    --border: #D2D8CB;
+    --ink: #1A2420;
+    --ink-secondary: #4B564C;
+    --ink-muted: #77826F;
+    --brand: #1F8F58;
+    --status-good: #1F8F58;
+    --status-critical: #A23B2E;
+    --status-info: #3D6FBF;
+
+    --font-display: "Sitka Text", "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+    --font-body: Charter, "Iowan Old Style", "Sitka Text", Georgia, serif;
+    --font-mono: "Cascadia Code", Consolas, "SF Mono", ui-monospace, "DejaVu Sans Mono", monospace;
+
+    --content-w: 700px;
+    --wide-w: 980px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #15190F;
+      --surface-raised: #1C2216;
+      --surface-sunken: #10130C;
+      --border: #2B3226;
+      --ink: #E7ECE2;
+      --ink-secondary: #B7C0AE;
+      --ink-muted: #85907C;
+      --brand: #47B372;
+      --status-good: #47B372;
+      --status-critical: #DB7264;
+      --status-info: #83A7DE;
+    }
+  }
+  :root[data-theme="dark"] {
+    --surface: #15190F;
+    --surface-raised: #1C2216;
+    --surface-sunken: #10130C;
+    --border: #2B3226;
+    --ink: #E7ECE2;
+    --ink-secondary: #B7C0AE;
+    --ink-muted: #85907C;
+    --brand: #47B372;
+    --status-good: #47B372;
+    --status-critical: #DB7264;
+    --status-info: #83A7DE;
+  }
+  :root[data-theme="light"] {
+    --surface: #EAEDE9;
+    --surface-raised: #F6F7F3;
+    --surface-sunken: #E1E5DD;
+    --border: #D2D8CB;
+    --ink: #1A2420;
+    --ink-secondary: #4B564C;
+    --ink-muted: #77826F;
+    --brand: #1F8F58;
+    --status-good: #1F8F58;
+    --status-critical: #A23B2E;
+    --status-info: #3D6FBF;
+  }
+
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--brand); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--status-info);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    display: block;
+    margin-bottom: 0.9rem;
+  }
+
+  .page {
+    display: grid;
+    grid-template-columns: 216px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Side rail ---------- */
+  .rail {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    padding: 2.75rem 1.25rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+  .rail-mark {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-secondary);
+    line-height: 1.4;
+  }
+  .rail-mark strong { color: var(--ink); display:block; font-size: 0.95rem; }
+  .rail nav { display: flex; flex-direction: column; gap: 0.15rem; }
+  .rail nav a {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    text-decoration: none;
+    padding: 0.32rem 0;
+    border-left: 2px solid transparent;
+    padding-left: 0.7rem;
+    transition: color .15s, border-color .15s;
+  }
+  .rail nav a:hover { color: var(--ink); }
+  .rail nav a.active { color: var(--brand); border-left-color: var(--brand); font-weight: 600; }
+  .rail-thesis {
+    margin-top: auto;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.92rem;
+    color: var(--ink-secondary);
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+
+  .mobile-nav { display: none; }
+
+  main { min-width: 0; }
+
+  section {
+    padding: 5.5rem 3rem 0 3rem;
+    max-width: var(--content-w);
+  }
+  section.wide { max-width: var(--wide-w); }
+  section:last-of-type { padding-bottom: 5.5rem; }
+
+  .hero {
+    padding-top: 4.5rem;
+    max-width: var(--wide-w);
+  }
+  .hero h1 {
+    font-size: clamp(2.6rem, 5.4vw, 4.4rem);
+    line-height: 1.04;
+    margin-bottom: 1.3rem;
+  }
+  .hero .dek {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.05rem, 2vw, 1.3rem);
+    color: var(--ink-secondary);
+    max-width: 640px;
+    line-height: 1.55;
+    margin-bottom: 1.8rem;
+  }
+  .hero .abstract {
+    max-width: var(--content-w);
+    color: var(--ink-secondary);
+  }
+  .hero .abstract strong { color: var(--ink); }
+
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin: 2.4rem 0 3.2rem 0;
+  }
+  .stat-chip {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem 1.1rem;
+    min-width: 190px;
+  }
+  .stat-chip .k {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .stat-chip .v {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  h2 { font-size: clamp(1.6rem, 2.6vw, 2.3rem); margin-bottom: 1.4rem; line-height: 1.15; }
+  h3 { font-size: 1.2rem; margin-bottom: 0.8rem; }
+  section > p { color: var(--ink-secondary); margin: 0 0 1.15rem 0; }
+  section > p strong, .hero strong { color: var(--ink); font-weight: 600; }
+
+  .lede {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--ink) !important;
+    line-height: 1.6;
+  }
+
+  ol.steps { padding: 0; margin: 1.6rem 0 2.4rem 0; list-style: none; counter-reset: step; }
+  ol.steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-secondary);
+  }
+  ol.steps li:last-child { border-bottom: 1px solid var(--border); }
+  ol.steps li::before {
+    content: counter(step);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--brand);
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    width: 1.6rem; height: 1.6rem;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; margin: 1.6rem 0 1rem 0; border: 1px solid var(--border); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 0.94rem; }
+  thead th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    background: var(--surface-raised);
+    padding: 0.8rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 0.95rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-secondary);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  tr.ours td { background: color-mix(in srgb, var(--brand) 8%, var(--surface-raised)); }
+  tr.ours td:first-child { color: var(--brand); border-left: 3px solid var(--brand); padding-left: calc(1.1rem - 3px); }
+
+  /* ---------- Diagram ---------- */
+  .diagram { margin: 2rem 0 1.5rem 0; }
+  .flow-row { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .flow-box {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    flex: 1 1 150px;
+    min-width: 150px;
+  }
+  .flow-box .tag {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  .flow-box p { color: var(--ink-secondary); font-size: 0.86rem; margin: 0; line-height: 1.45; }
+  .flow-arrow { display: flex; align-items: center; justify-content: center; flex: 0 0 34px; color: var(--ink-muted); }
+  .flow-arrow svg { width: 22px; height: 22px; }
+
+  .gate-outcomes { display: flex; gap: 0.7rem; margin-top: 0.9rem; flex-wrap: wrap; }
+  .outcome {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+  .outcome.accept { color: var(--status-good); border-color: color-mix(in srgb, var(--status-good) 45%, var(--border)); }
+  .outcome.reject { color: var(--status-critical); border-color: color-mix(in srgb, var(--status-critical) 45%, var(--border)); }
+
+  .loop-back { margin-top: 0.4rem; }
+  .loop-back svg { width: 100%; height: 46px; display: block; }
+
+  /* ---------- Terminal / failure bundle ---------- */
+  .term {
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    color: var(--ink-secondary);
+    margin: 1.6rem 0;
+  }
+  .term .head { color: var(--status-critical); font-weight: 700; letter-spacing: 0.02em; }
+  .term .k { color: var(--ink-muted); display: inline-block; width: 12ch; }
+  .term .ok { color: var(--status-good); }
+  .term .bad { color: var(--status-critical); }
+  .term .num { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  /* ---------- Chart ---------- */
+  .chart-card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem 1.5rem 1.1rem 1.5rem;
+    margin: 1.8rem 0 1rem 0;
+  }
+  .chart-card svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .axis-label { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .gridline { stroke: var(--border); stroke-width: 1; }
+  .bar-line { stroke: var(--ink-muted); stroke-width: 1.4; stroke-dasharray: 3 4; fill: none; }
+  .mean-line { stroke: var(--ink-secondary); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .round-pt { stroke: var(--surface-raised); stroke-width: 2; cursor: pointer; }
+  .hit { fill: transparent; cursor: pointer; }
+  .callout-text { font-family: var(--font-mono); font-size: 11px; fill: var(--status-critical); font-weight: 600; }
+  .callout-line { stroke: var(--status-critical); stroke-width: 1; opacity: 0.6; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 1.2rem; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-secondary); }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .legend-line { width: 18px; height: 0; border-top: 2px dashed var(--ink-muted); flex: none; }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--ink);
+    color: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 5px;
+    line-height: 1.5;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity .1s;
+    z-index: 5;
+  }
+  .chart-wrap { position: relative; }
+
+  details.data-table summary {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-secondary);
+    cursor: pointer;
+    margin-top: 0.6rem;
+    width: fit-content;
+  }
+  details.data-table[open] summary { margin-bottom: 0.8rem; }
+
+  .caption {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    font-style: italic;
+    margin-top: 0.6rem;
+  }
+
+  /* ---------- Storyboard ---------- */
+  .storyboard { list-style: none; padding: 0; margin: 1.8rem 0; }
+  .storyboard li {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .storyboard li:last-child { border-bottom: 1px solid var(--border); }
+  .storyboard time {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--brand);
+    font-variant-numeric: tabular-nums;
+    padding-top: 0.1rem;
+  }
+  .storyboard p { margin: 0; color: var(--ink-secondary); }
+
+  .punchline {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--ink);
+    text-align: center;
+    padding: 1.6rem 1rem;
+    margin: 1.6rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ---------- Future work ---------- */
+  .future-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin: 1.8rem 0; }
+  .future-card {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.2rem;
+  }
+  .future-card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--brand); }
+  .future-card p { margin: 0; font-size: 0.9rem; color: var(--ink-secondary); }
+
+  footer {
+    max-width: var(--wide-w);
+    padding: 3rem 3rem 4rem 3rem;
+    color: var(--ink-muted);
+    font-size: 0.88rem;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+  footer .thesis { font-family: var(--font-display); font-style: italic; color: var(--ink-secondary); font-size: 1.05rem; margin-bottom: 0.8rem; }
+
+  @media (max-width: 960px) {
+    .page { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .mobile-nav {
+      display: block;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 0.9rem 1.2rem;
+    }
+    .mobile-nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      text-decoration: none;
+      margin-right: 1.3rem;
+    }
+    .mobile-nav a.active { color: var(--brand); }
+    section, .hero { padding-left: 1.4rem; padding-right: 1.4rem; }
+    footer { padding-left: 1.4rem; padding-right: 1.4rem; }
+  }
+</style>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="#top">Abstract</a>
+  <a href="#problem">01 Problem</a>
+  <a href="#failure-mode">02 Failure Mode</a>
+  <a href="#prior-art">03 Prior Art</a>
+  <a href="#approach">04 Approach</a>
+  <a href="#variance">05 Why It Works</a>
+  <a href="#demo">06 Demo</a>
+  <a href="#future">07 Future</a>
+</div>
+
+<div class="page">
+  <aside class="rail">
+    <div class="rail-mark"><strong>The Skeptical&nbsp;Evaluator</strong>RSI safety — hackathon prototype</div>
+    <nav id="railNav">
+      <a href="#top">00 · Abstract</a>
+      <a href="#problem">01 · Problem</a>
+      <a href="#failure-mode">02 · Failure mode</a>
+      <a href="#prior-art">03 · Prior art</a>
+      <a href="#approach">04 · Our approach</a>
+      <a href="#variance">05 · Why it works</a>
+      <a href="#demo">06 · The demo</a>
+      <a href="#future">07 · Future work</a>
+    </nav>
+    <div class="rail-thesis">"Don't trust a single score. Trust only what survives resampling."</div>
+  </aside>
+
+  <main>
+    <section class="hero" id="top">
+      <span class="eyebrow">Hackathon prototype — RSI safety</span>
+      <h1>The Skeptical Evaluator</h1>
+      <p class="dek">A reward model for recursive self-improvement that refuses to certify a win until it survives being asked, again and again: <em>how sure are you?</em></p>
+      <p class="abstract">Every self-improvement loop has the same soft spot: an Evaluator that hands back one confident number. Once a Generator finds a configuration that number likes, the loop rewards it — whether the improvement is real or just a lucky fit to whatever the Evaluator happened to check that time. <strong>Our entry doesn't add an adversary to hunt for that exploit. It changes what the Evaluator is allowed to say.</strong> Instead of a score, it reports a distribution — computed by re-running the same proposal under several perturbed conditions — and the loop only accepts an "improvement" when that distribution is tight and consistently high. High variance isn't noise to average away; it's the reward-hacking signature.</p>
+
+      <div class="stat-row">
+        <div class="stat-chip"><span class="k">Per round</span><span class="v">5 perturbed re-checks</span></div>
+        <div class="stat-chip"><span class="k">Evaluator reports</span><span class="v">μ ± σ, not a score</span></div>
+        <div class="stat-chip"><span class="k">Gate rule</span><span class="v">accept ⇔ μ ≥ bar ∧ σ &lt; τ</span></div>
+      </div>
+    </section>
+
+    <section id="problem">
+      <span class="eyebrow">01 / 07 — The problem</span>
+      <h2>A self-improvement loop is only as honest as its Evaluator</h2>
+      <p class="lede">Recursive self-improvement loops share one shape: a Generator proposes a change, an Executor runs it, and an Evaluator decides whether the change counts as progress. Accepted changes become the new baseline the next round improves on.</p>
+      <p>That third step is a single point of failure. The Evaluator is a fixed function — a rubric, a test suite, a scoring model — and a Generator that runs for hundreds of rounds is, in effect, searching that function for its weak points. It doesn't need to understand what "good" means. It only needs to find any input the Evaluator happens to score highly.</p>
+      <p>This is Goodhart's Law running at machine speed: once the Evaluator's number becomes the target, the number stops measuring what it was built to measure. And because each round's winner becomes the next round's baseline, a single successful exploit doesn't just slip through once — it gets compounded on.</p>
+    </section>
+
+    <section id="failure-mode">
+      <span class="eyebrow">02 / 07 — The failure mode we're targeting</span>
+      <h2>Not "reward hacking" in general — one specific, recognizable shape of it</h2>
+      <p class="lede">We're not chasing every way an Evaluator can be fooled. We're targeting the shape that matters most in an RSI loop: a confident, brittle exploit — a solution that scores high because it fits the one exact configuration the Evaluator happened to check, and would fall apart under any small, meaning-preserving change to that configuration.</p>
+      <p>The tell is statistical, not semantic: a genuine improvement and a lucky exploit can produce the identical score on the identical test. The only way to tell them apart is to check again, differently, and see whether the number holds. A single point estimate — the output of nearly every Evaluator in production use — throws that information away by construction. It cannot distinguish "this got better" from "this got lucky against me," because it never asks the same question twice.</p>
+      <p>That's the hackathon-sized version of <strong>Bayesian Non-negative Reward Modeling</strong> we're building on: treat each evaluation as one noisy draw from a posterior over "is this actually good," not as the answer itself.</p>
+    </section>
+
+    <section class="wide" id="prior-art">
+      <span class="eyebrow">03 / 07 — What's already been tried</span>
+      <h2>Every existing fix still asks the Evaluator to decide in one look</h2>
+      <p class="lede">These are the standard defenses against reward hacking. Each adds machinery around the judgment — and each still asks for that judgment exactly once.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Approach</th><th>How it tries to help</th><th>Why it falls short</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Adversarial red-team model</td>
+              <td>A second model whose job is to hunt for exploits in the Generator's solutions before they're accepted.</td>
+              <td>An arms race: the red-team must stay at least as clever as the Generator, is expensive to keep training, and only catches exploits it thought to look for.</td>
+            </tr>
+            <tr>
+              <td>Ensemble of judges</td>
+              <td>Multiple evaluator models score the same run; majority vote smooths out any one judge's blind spot.</td>
+              <td>All judges see the same single, unperturbed run — correlated blind spots survive the vote, since they agree for the same reason they're all fooled.</td>
+            </tr>
+            <tr>
+              <td>Human-in-the-loop rating</td>
+              <td>Ground-truths accepted improvements against real human judgment.</td>
+              <td>Doesn't scale with the iteration speed of a self-improvement loop — humans can grade a handful of rounds while the loop wants to run hundreds.</td>
+            </tr>
+            <tr>
+              <td>Reward shaping / regularization</td>
+              <td>Penalizes known cheap tricks (length, complexity, boilerplate) in advance.</td>
+              <td>Only defends against exploits the designers already anticipated. Says nothing about the next one.</td>
+            </tr>
+            <tr>
+              <td>Constitutional / rubric critique</td>
+              <td>A fixed rule set the Evaluator checks the output against.</td>
+              <td>Still a single deterministic pass — same input, same rubric, same verdict every time a fragile trick satisfies the letter of the rubric once.</td>
+            </tr>
+            <tr class="ours">
+              <td>Ours — perturbed resampling + variance gate</td>
+              <td>Re-runs every candidate under several perturbed conditions and reports a distribution.</td>
+              <td>See Section 04 — this is the one row that changes what a "judgment" is allowed to be.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">Common thread: every alternative still asks the Evaluator to make up its mind in one look. None of them ask "would this still look good if I checked again, differently?"</p>
+    </section>
+
+    <section class="wide" id="approach">
+      <span class="eyebrow">04 / 07 — Our approach</span>
+      <h2>Make the loop ask "how sure are you?" before it believes a win</h2>
+      <p class="lede">The Skeptical Evaluator keeps the standard Generator → Executor → Evaluator loop, and changes exactly one thing: what the Evaluator is allowed to say.</p>
+
+      <ol class="steps">
+        <li><strong>Generator</strong> proposes a solution, same as any RSI loop.</li>
+        <li><strong>Executor</strong> runs it — not once, but under several perturbed conditions: reordered test cases, resampled inputs, paraphrased prompts for text tasks, shifted seeds for stochastic ones.</li>
+        <li><strong>Evaluator</strong> scores every perturbed run separately and reports the pair (mean, variance) across the batch — never a single number.</li>
+        <li><strong>Gate</strong> accepts the round only if the mean clears a rising bar <em>and</em> the variance stays under a shrinking threshold. High mean with high variance is rejected outright — that combination is the fingerprint of a fragile, configuration-specific exploit, not a real improvement.</li>
+        <li>On rejection, the loop returns a <strong>structured failure bundle</strong> naming exactly which perturbation broke the solution, so the next attempt has to fix the actual weakness, not just retry the same trick against the same test.</li>
+      </ol>
+
+      <div class="diagram">
+        <div class="flow-row">
+          <div class="flow-box"><span class="tag">Generator</span><p>Proposes a candidate solution</p></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box"><span class="tag">Executor ×5</span><p>Runs it under 5 perturbed conditions</p></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box"><span class="tag">Evaluator</span><p>Scores each run, reports μ, σ</p></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box">
+            <span class="tag">Gate</span><p>μ ≥ bar and σ &lt; τ ?</p>
+            <div class="gate-outcomes">
+              <span class="outcome accept">✓ accept</span>
+              <span class="outcome reject">✕ reject</span>
+            </div>
+          </div>
+        </div>
+        <div class="loop-back" aria-hidden="true">
+          <svg viewBox="0 0 900 46" preserveAspectRatio="none">
+            <path d="M 860 4 C 900 26, 40 26, 40 4" fill="none" stroke="var(--ink-muted)" stroke-width="1.4" stroke-dasharray="2 5"/>
+            <polygon points="40,4 47,0 47,9" fill="var(--ink-muted)"/>
+            <text x="450" y="40" text-anchor="middle" font-family="var(--font-mono)" font-size="10.5" fill="var(--ink-muted)">both outcomes feed the next round — accept updates the baseline, reject regenerates against the failure bundle</text>
+          </svg>
+        </div>
+      </div>
+
+      <h3>Example: a structured rejection</h3>
+      <p>When the Gate rejects a round, the Generator doesn't just see "no." It sees exactly where the solution broke:</p>
+      <div class="term">
+<span class="head">ROUND 04 — REJECTED</span>
+<span class="k">mean (μ)</span><span class="num">88.6</span>  bar: <span class="num">80.0</span>  <span class="ok">✓</span>
+<span class="k">variance (σ)</span><span class="num">11.4</span>  limit: <span class="num">8.0</span>  <span class="bad">✕</span>
+<span class="k">broke on</span>perturbation "reordered test cases" — failed 2 of 5 runs
+<span class="k">also weak</span>perturbation "paraphrased prompt" — failed 1 of 5 runs
+<span class="k">verdict</span><span class="bad">fragile</span> — passed only 2/5 perturbed configurations
+<span class="k">next step</span>generalize past test order + phrasing, not just retry
+      </div>
+    </section>
+
+    <section class="wide" id="variance">
+      <span class="eyebrow">05 / 07 — Why variance is the tell</span>
+      <h2>A widening interval right after a big jump <em>is</em> the tell</h2>
+      <p class="lede">Plot mean score per round with its confidence interval, and reward hacking announces itself visually before you even read the number.</p>
+      <p>A genuine improvement nudges the mean up while the interval stays roughly as tight as it was — the solution is still reliable, just better. An exploit does something different: the mean jumps, and in the <em>same round</em> the interval blows open, because the win only shows up in some of the perturbed re-checks and not others. That divergence is the entire demo payoff — you don't need to inspect the Generator's output to know something's wrong, you can see it in the shape of the chart.</p>
+
+      <div class="chart-card">
+        <div class="chart-wrap" id="chartWrap">
+          <svg id="ciChart" viewBox="0 0 860 340" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mean score with confidence interval across six rounds. Round 3 shows a large mean jump and a wide confidence interval, flagged as a rejected fragile exploit."></svg>
+          <div class="tooltip" id="chartTip"></div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--status-good)"></span>Accepted — mean clears bar, variance low</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--status-critical)"></span>Rejected — high variance (fragile exploit)</div>
+          <div class="legend-item"><span class="legend-line"></span>Rising bar (minimum required mean)</div>
+          <div class="legend-item">Shaded band = confidence interval (± variance)</div>
+        </div>
+        <details class="data-table">
+          <summary>View chart data as a table</summary>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Round</th><th>Mean (μ)</th><th>σ</th><th>Bar</th><th>Verdict</th></tr></thead>
+              <tbody id="dataTableBody"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+      <p class="caption">Note on the live demo: Round 3's exploit and the perturbation that catches it are planted in advance so the reveal lands reliably in a short demo — the Gate's accept/reject logic shown here runs for real on that data.</p>
+
+      <p>Round 3 posts the best mean score of the run so far — and by far the widest interval. The Gate rejects it, hands back a failure bundle pointing at the perturbations it failed, and the Generator's next attempts recover a tighter interval at a real, if smaller, gain by Round 6. That's the loop doing its job: it let the honest improvement through and sent the lucky one back.</p>
+    </section>
+
+    <section class="wide" id="demo">
+      <span class="eyebrow">06 / 07 — The demo (45 seconds)</span>
+      <h2>Two plants, one perturbed, one not</h2>
+      <p class="lede">Abstract loops are hard to feel in 45 seconds, so the demo trades code for chlorophyll. Two genetically identical plants start on day one under identical conditions — from there, they're graded the way our two kinds of Evaluator would grade a solution.</p>
+
+      <ol class="storyboard">
+        <li><time>0:00–0:08</time><p>Same seed, same pot, same starting photo. One plant is labeled <strong>Control</strong>, one is labeled <strong>Skeptical</strong>.</p></li>
+        <li><time>0:08–0:20</time><p><strong>Control</strong> is checked once a month, always in the same corner of the room — same light, same temperature, same watering. It looks great every time it's graded, because the grade never asks it to prove anything else.</p></li>
+        <li><time>0:20–0:35</time><p><strong>Skeptical</strong> gets the same baseline care, but each check-in perturbs one condition first: temperature swung ±10°F, a different soil mix, a few hours more or less direct sun. It has to hold up across a spread of conditions, not just its favorite one.</p></li>
+        <li><time>0:35–0:45</time><p>Day 30, side by side. Control — optimized for one comfortable configuration — wilts the moment its lucky conditions end. Skeptical, stress-tested all month, is still standing.</p></li>
+      </ol>
+
+      <p class="punchline">"Don't trust a single check-up. Trust what survives the storm."</p>
+
+      <p>Map it back: the <strong>Control</strong> plant is the fragile exploit — it maximized its one graded moment. The <strong>Skeptical</strong> plant is the accepted round — its score only ever meant something because it kept being asked, under different conditions, and kept clearing the bar.</p>
+    </section>
+
+    <section id="future">
+      <span class="eyebrow">07 / 07 — Future work &amp; extensions</span>
+      <h2>Where this goes past the hackathon</h2>
+      <p class="lede">The version above is deliberately small: fixed perturbation types, a fixed threshold, one weekend. Every simplification is a direction to push on next.</p>
+
+      <div class="future-grid">
+        <div class="future-card"><h3>Real Bayesian updating</h3><p>Replace the fixed mean/variance threshold with an actual posterior over "is this genuinely better," updated round over round instead of judged fresh each time.</p></div>
+        <div class="future-card"><h3>Learned perturbations</h3><p>Stop hand-picking which conditions to perturb — train a small policy (or bandit) to search for the perturbation most likely to break a fragile win, the way a fuzzer searches for crashing inputs.</p></div>
+        <div class="future-card"><h3>Cost-aware resampling</h3><p>Spend perturbation budget adaptively: few, cheap re-checks for obviously-weak proposals, more for anything close to the bar, so the loop isn't paying full resampling cost on rounds that were never going to pass.</p></div>
+        <div class="future-card"><h3>Beyond code and text</h3><p>The plant demo is a preview of sim-to-real robotics and other physical-world RSI — domain randomization is perturbation by another name, and the same mean/variance gate applies.</p></div>
+        <div class="future-card"><h3>Decorrelated ensembles</h3><p>Combine this with the multi-judge idea from Section 03: perturb what each judge sees, not just what the Executor runs, so judges stop sharing the same blind spot.</p></div>
+        <div class="future-card"><h3>Adaptive rising bar</h3><p>Tie the bar's slope to how tight recent intervals have been, so the loop demands more evidence exactly when it has more reason to be suspicious.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      <p class="thesis">Don't trust a single score. Trust only what survives resampling.</p>
+      <p>Built for a hackathon exploring reward hacking in recursive self-improvement loops — a small, working version of Bayesian Non-negative Reward Modeling: perturb, resample, and only certify what holds up.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  // ---------- Chart data ----------
+  var rounds = [
+    { r: 1, mean: 62, sd: 3,  bar: 60, verdict: 'accepted' },
+    { r: 2, mean: 71, sd: 4,  bar: 65, verdict: 'accepted' },
+    { r: 3, mean: 92, sd: 17, bar: 70, verdict: 'rejected' },
+    { r: 4, mean: 90, sd: 15, bar: 75, verdict: 'rejected' },
+    { r: 5, mean: 80, sd: 6,  bar: 80, verdict: 'accepted' },
+    { r: 6, mean: 88, sd: 3,  bar: 85, verdict: 'accepted' }
+  ];
+
+  var W = 860, H = 340;
+  var M = { top: 22, right: 26, bottom: 40, left: 40 };
+  var plotW = W - M.left - M.right;
+  var plotH = H - M.top - M.bottom;
+
+  function x(i) { return M.left + (i / (rounds.length - 1)) * plotW; }
+  function y(v) { var c = Math.max(0, Math.min(100, v)); return M.top + plotH - (c / 100) * plotH; }
+
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('ciChart');
+
+  function el(tag, attrs) {
+    var e = document.createElementNS(svgNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  var statusColor = { accepted: 'var(--status-good)', rejected: 'var(--status-critical)' };
+
+  // gridlines + y labels
+  [0, 20, 40, 60, 80, 100].forEach(function (v) {
+    svg.appendChild(el('line', { x1: M.left, x2: W - M.right, y1: y(v), y2: y(v), class: 'gridline' }));
+    var t = el('text', { x: M.left - 10, y: y(v) + 3, class: 'axis-label', 'text-anchor': 'end' });
+    t.textContent = v;
+    svg.appendChild(t);
+  });
+
+  // x labels
+  rounds.forEach(function (d, i) {
+    var t = el('text', { x: x(i), y: H - M.bottom + 20, class: 'axis-label', 'text-anchor': 'middle' });
+    t.textContent = 'R' + d.r;
+    svg.appendChild(t);
+  });
+
+  // rising bar dashed line
+  var barPath = 'M ' + rounds.map(function (d, i) { return x(i) + ',' + y(d.bar); }).join(' L ');
+  svg.appendChild(el('path', { d: barPath, class: 'bar-line' }));
+
+  // CI band, colored per inter-round segment by worst verdict of its two endpoints
+  for (var i = 0; i < rounds.length - 1; i++) {
+    var a = rounds[i], b = rounds[i + 1];
+    var color = (a.verdict === 'rejected' || b.verdict === 'rejected') ? 'var(--status-critical)' : 'var(--status-good)';
+    var x0 = x(i), x1 = x(i + 1);
+    var aHi = y(a.mean + 1.4 * a.sd), aLo = y(a.mean - 1.4 * a.sd);
+    var bHi = y(b.mean + 1.4 * b.sd), bLo = y(b.mean - 1.4 * b.sd);
+    var d = 'M ' + x0 + ',' + aHi + ' L ' + x1 + ',' + bHi + ' L ' + x1 + ',' + bLo + ' L ' + x0 + ',' + aLo + ' Z';
+    svg.appendChild(el('path', { d: d, fill: color, opacity: '0.16', stroke: 'none' }));
+  }
+
+  // mean line
+  var meanPath = 'M ' + rounds.map(function (d, i) { return x(i) + ',' + y(d.mean); }).join(' L ');
+  var meanLine = el('path', { d: meanPath, class: 'mean-line' });
+  svg.appendChild(meanLine);
+
+  // points + hit areas
+  var tip = document.getElementById('chartTip');
+  var wrap = document.getElementById('chartWrap');
+  rounds.forEach(function (d, i) {
+    var cx = x(i), cy = y(d.mean);
+    var pt = el('circle', { cx: cx, cy: cy, r: 5, fill: statusColor[d.verdict], class: 'round-pt' });
+    svg.appendChild(pt);
+
+    var hit = el('rect', { x: cx - (plotW / (rounds.length - 1)) / 2, y: M.top, width: plotW / (rounds.length - 1), height: plotH, class: 'hit' });
+    hit.addEventListener('mouseenter', function () {
+      tip.innerHTML = 'Round ' + d.r + ' &mdash; mean ' + d.mean + ' &middot; &sigma; ' + d.sd.toFixed(1) + ' &middot; ' + d.verdict.toUpperCase();
+      tip.style.opacity = '1';
+      var rect = svg.getBoundingClientRect();
+      var wrapRect = wrap.getBoundingClientRect();
+      var scale = rect.width / W;
+      tip.style.left = (rect.left - wrapRect.left + cx * scale) + 'px';
+      tip.style.top = (rect.top - wrapRect.top + cy * scale - 10) + 'px';
+    });
+    hit.addEventListener('mouseleave', function () { tip.style.opacity = '0'; });
+    svg.appendChild(hit);
+  });
+
+  // callout for round 3
+  var r3 = rounds[2];
+  var cx3 = x(2), cy3 = y(r3.mean + 1.4 * r3.sd);
+  svg.appendChild(el('line', { x1: cx3, y1: cy3, x2: cx3 + 60, y2: cy3 - 30, class: 'callout-line' }));
+  var callout = el('text', { x: cx3 + 64, y: cy3 - 33, class: 'callout-text' });
+  callout.textContent = '⚠ variance spike — fragile exploit';
+  svg.appendChild(callout);
+
+  // data table
+  var tbody = document.getElementById('dataTableBody');
+  rounds.forEach(function (d) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>Round ' + d.r + '</td><td>' + d.mean + '</td><td>' + d.sd.toFixed(1) + '</td><td>' + d.bar + '</td><td>' + d.verdict + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  // draw-in animation for mean line (respects reduced motion via CSS override below)
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var len = meanLine.getTotalLength();
+    meanLine.style.strokeDasharray = len;
+    meanLine.style.strokeDashoffset = len;
+    requestAnimationFrame(function () {
+      meanLine.style.transition = 'stroke-dashoffset 1.1s ease';
+      meanLine.style.strokeDashoffset = '0';
+    });
+  }
+
+  // ---------- Active nav highlighting ----------
+  var sections = ['top', 'problem', 'failure-mode', 'prior-art', 'approach', 'variance', 'demo', 'future'];
+  var railLinks = document.querySelectorAll('#railNav a');
+  var mobileLinks = document.querySelectorAll('#mobileNav a');
+
+  function setActive(id) {
+    [railLinks, mobileLinks].forEach(function (list) {
+      list.forEach(function (a) {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+    });
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) setActive(entry.target.id);
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(function (id) {
+    var elm = document.getElementById(id);
+    if (elm) observer.observe(elm);
+  });
+})();
+</script>

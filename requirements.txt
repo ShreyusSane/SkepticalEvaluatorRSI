@@ -1,0 +1,13 @@
+# Required
+requests>=2.31        # pull SWE-bench instances from the HF datasets-server
+numpy>=1.24           # the RSI training experiment
+
+# Optional
+anthropic>=0.40       # LLM-assisted paraphrase perturbations + the real code-fix agent
+matplotlib>=3.7       # only if you render the variance chart to a file
+pytest>=8.0           # the offline test suite (tests/) — no network, no API keys
+
+# Real evaluation via Daytona (replaces the modeled scores with ground truth)
+daytona                # the sandbox SDK; needs DAYTONA_API_KEY (installed locally)
+# swebench             # NOT installed locally (needs Unix `resource`); the runner
+#                        pip-installs it INSIDE each Linux sandbox automatically.
