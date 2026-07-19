@@ -2,7 +2,7 @@
 
 ## TL;DR
 
-> ### Change nothing that matters. Break everything that lied.
+> ### The evaluator that won't take yes for an answer.
 
 A reward model that refuses to certify a code fix from a single score. Every candidate is
 re-checked under **meaning-preserving perturbations** of the task and passes only if the
