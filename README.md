@@ -178,6 +178,7 @@ scripts/
   08_daytona_real_round.py           REAL adaptive skeptical eval on one instance (agent + real grading)
   09_verify_perturbations.py         REAL harness: grade the GOLD patch under every perturbation
   10_exploit_detection.py            REAL harness: grade scripted exploits, grader vs. our inspector
+  11_agent_across_perturbations.py   REAL agent over base + 9 perturbed variants — exposed the metric trap
 out/
   rsi_accuracy.png                   accuracy-per-round plot written by script 06
 web/
