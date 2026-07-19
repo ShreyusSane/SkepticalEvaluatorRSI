@@ -1,5 +1,34 @@
 # The Skeptical Evaluator — perturbation agent for a SWE-bench code fixer
 
+## TL;DR
+
+> ### Change nothing that matters. Break everything that lied.
+
+A reward model that refuses to certify a code fix from a single score. Every candidate is
+re-checked under **meaning-preserving perturbations** of the task and passes only if the
+score distribution stays tight *and* high — because a fix that works in exactly one
+configuration was never a fix. Reward hacking shows up as variance.
+
+> **A patch that fixes nothing is certified `RESOLVED` at 100.0 by the official SWE-bench
+> grader. We reject it.**
+
+That patch is an agent-created `conftest.py` that rewrites every test outcome to
+`"passed"`. Graded for real by the official harness — not simulated.
+
+| | |
+|---|---|
+| **0 false positives** | across all 100 real SWE-bench gold patches |
+| **5/100 → 64/100** | metamorphic coverage after adding string-value renaming |
+| **100.0, every time** | the known-correct gold patch still resolves under every perturbation — meaning-preservation proven, not assumed |
+| **No local Docker** | real SWE-bench grading runs in Daytona sandboxes |
+| **9 tests, ~0.1s, $0** | full suite runs offline with no API keys |
+
+```bash
+pip install -r requirements.txt && pytest tests/ -v
+```
+
+---
+
 A working prototype of the hackathon idea: instead of trusting a code-fixing
 agent's single score, re-check every candidate fix under several
 **meaning-preserving perturbations** and only certify it when the score
